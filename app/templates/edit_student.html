@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Student</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .form-container input {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+        }
+        .form-container button {
+            padding: 8px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Edit Student</h1>
+    <div class="form-container">
+        <form action="/admin/update_student/{{ student.id }}" method="post">
+            <input type="text" name="student_name" value="{{ student.name }}" required>
+            <input type="number" name="student_points" value="{{ student.points }}" required>
+            <button type="submit">Update Student</button>
+        </form>
+    </div>
+</body>
+</html>

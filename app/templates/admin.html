@@ -4,8 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .form-container input {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+        }
+        .form-container button {
+            padding: 8px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #218838;
+        }
+        .redeemable-items-section {
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Admin Page</h1>
+    <h1>Admin Page</h1>
+
+    <!-- Create Student Form -->
+    <div class="form-container">
+        <h2>Create Student</h2>
+        <form action="/admin/create_student" method="post">
+            <input type="text" name="student_id" placeholder="Student ID" required>
+            <input type="text" name="student_name" placeholder="Student Name" required>
+            <input type="number" name="student_points" placeholder="Points" required>
+            <button type="submit">Create Student</button>
+        </form>
+    </div>
+
+    <!-- List All Students -->
+    <h2>Student List</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Points</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.id }}</td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.points }}</td>
+                <td>
+                    <a href="/admin/edit_student/{{ student.id }}">Edit</a>
+                    <a href="/admin/delete_student/{{ student.id }}">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Search Student Form -->
+    <div class="form-container">
+        <h2>Search Student</h2>
+        <form action="/admin/search_student" method="get">
+            <input type="text" name="query" placeholder="Enter Student ID or Name" required>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <!-- Redeemable Items Section -->
+    <div class="redeemable-items-section">
+        <h2>Redeemable Items</h2>
+        <p>Manage redeemable items for students.</p>
+        <a href="/redeemable_items">Manage Redeemable Items</a>
+    </div>
 </body>
 </html>
