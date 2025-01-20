@@ -1,11 +1,11 @@
 from flask import render_template, request, redirect, url_for
 from app import app
 
-# Dummy data for testing
-students = [
-    {'id': 'A1234567X', 'name': 'John Tan', 'points': 50},
-    {'id': 'A1234568Y', 'name': 'Sarah Lim', 'points': 80},
-]
+# Dummy user data for testing
+users = {
+    'admin': 'admin',
+    'student': 'student',
+}
 
 @app.route('/')
 def home():
@@ -15,17 +15,19 @@ def home():
 def login():
     username = request.form['username']
     password = request.form['password']
-    # Dummy validation
-    if username == 'admin' and password == 'admin':
-        return redirect(url_for('admin_page'))
-    elif username == 'student' and password == 'student':
-        return redirect(url_for('student_page'))
+    # Check if username and password match
+    if username in users and users[username] == password:
+        if username == 'admin':
+            return redirect(url_for('admin_page'))
+        else:
+            return redirect(url_for('student_page'))
     else:
-        return "Invalid username or password"
+        # Pass an error message to the template
+        return render_template('login.html', error="Invalid username or password")
 
 @app.route('/admin')
 def admin_page():
-    return render_template('admin.html', students=students)
+    return render_template('admin.html')
 
 @app.route('/student')
 def student_page():
