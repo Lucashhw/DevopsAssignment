@@ -4,12 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .student-info {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .student-info h2 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .student-info p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .navigation-links {
+            margin-top: 20px;
+        }
+        .navigation-links a {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .navigation-links a:hover {
+            background-color: #218838;
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to the Student Page</h1>
-    <p>This is the student dashboard. More features will be added later.</p>
 
+    <!-- Student Information Section -->
+    <div class="student-info">
+        <h2>Your Information</h2>
+        <p><strong>Username:</strong> {{ student.id }}</p>
+        <p><strong>Total Points:</strong> {{ student.points }}</p>
+    </div>
 
-    <p> I will be the one doing student html page wiht danish, we are going to get A</p>
+    <!-- Navigation Links -->
+    <div class="navigation-links">
+        <a href="/redeemable_items">Redeemable Items</a>
+        <a href="/redeemed_items">Redeemed Items</a>
+    </div>
+
+    <!-- Fun Message -->
+    <p>I will be the one doing the student HTML page with Danish, we are going to get an A!</p>
 </body>
 </html>
