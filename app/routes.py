@@ -9,8 +9,22 @@ users = {
 
 # Dummy student data for testing (replace with database later)
 students = [
-    {'id': 'A1234567X', 'name': 'John Tan', 'points': 50},
-    {'id': 'A1234568Y', 'name': 'Sarah Lim', 'points': 80},
+    {
+        'id': 'A1234567X',
+        'name': 'John Tan',
+        'diploma': 'Diploma in IT',
+        'year_of_entry': 2024,
+        'email': 'john.tan.2024@example.edu',
+        'points': 50
+    },
+    {
+        'id': 'A1234568Y',
+        'name': 'Sarah Lim',
+        'diploma': 'Diploma in Business',
+        'year_of_entry': 2023,
+        'email': 'sarah.lim.2023@example.edu',
+        'points': 80
+    }
 ]
 
 # Dummy redeemable items for testing (replace with database later)
@@ -63,10 +77,20 @@ def admin_page():
 def create_student():
     student_id = request.form['student_id']
     student_name = request.form['student_name']
+    diploma = request.form['diploma']
+    year_of_entry = int(request.form['year_of_entry'])
+    email = request.form['email']
     student_points = int(request.form['student_points'])
     
-    # Add the new student to the list (replace with database later)
-    students.append({'id': student_id, 'name': student_name, 'points': student_points})
+    # Add the new student to the list
+    students.append({
+        'id': student_id,
+        'name': student_name,
+        'diploma': diploma,
+        'year_of_entry': year_of_entry,
+        'email': email,
+        'points': student_points
+    })
     
     return redirect(url_for('admin_page'))
 
@@ -82,15 +106,20 @@ def edit_student(student_id):
 @app.route('/admin/update_student/<student_id>', methods=['POST'])
 def update_student(student_id):
     student_name = request.form['student_name']
+    diploma = request.form['diploma']
+    year_of_entry = int(request.form['year_of_entry'])
+    email = request.form['email']
     student_points = int(request.form['student_points'])
     
-    # Update the student in the list (replace with database query later)
+    # Update the student in the list
     for student in students:
         if student['id'] == student_id:
             student['name'] = student_name
+            student['diploma'] = diploma
+            student['year_of_entry'] = year_of_entry
+            student['email'] = email
             student['points'] = student_points
             break
-    
     
     return redirect(url_for('admin_page'))
 
