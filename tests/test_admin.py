@@ -1,4 +1,5 @@
 import unittest
+import io
 from app import app, students  # Import the students list
 
 class TestAdminPage(unittest.TestCase):
@@ -71,6 +72,38 @@ class TestAdminPage(unittest.TestCase):
         response = self.app.get('/admin/search_student?query=Sarah', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Sarah Lim', response.data)  # Check if the search result is correct
+
+    # New tests for CSV file upload
+    def test_csv_upload_success(self):
+        # Test successful CSV file upload
+        csv_data = "Student ID,Student Name,Diploma,Year of Entry,Email,Student Points\nA1234567X,John Tan,Diploma in IT,2021,john.tan@example.com,100"
+        csv_file = io.BytesIO(csv_data.encode('utf-8'))
+
+        # Follow the redirect to the Admin Page
+        response = self.app.post('/admin/upload_csv', data={
+            'file': (csv_file, 'test.csv')
+        }, content_type='multipart/form-data', follow_redirects=True)
+
+        self.assertEqual(response.status_code, 200)  # Check for successful response
+        self.assertIn(b'CSV file uploaded successfully', response.data)  # Check for flash message
+
+    def test_csv_upload_invalid_file(self):
+        # Test invalid file type
+        response = self.app.post('/admin/upload_csv', data={
+            'file': (io.BytesIO(b'Invalid file content'), 'test.txt')
+        }, content_type='multipart/form-data', follow_redirects=True)
+
+        self.assertEqual(response.status_code, 200)  # Check for successful response
+        self.assertIn(b'Invalid file type', response.data)  # Check for flash message
+
+    def test_csv_upload_empty_file(self):
+        # Test empty file
+        response = self.app.post('/admin/upload_csv', data={
+            'file': (io.BytesIO(b''), 'empty.csv')
+        }, content_type='multipart/form-data', follow_redirects=True)
+
+        self.assertEqual(response.status_code, 200)  # Check for successful response
+        self.assertIn(b'Error processing CSV file', response.data)  # Check for flash message
 
 if __name__ == '__main__':
     unittest.main()
