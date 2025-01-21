@@ -31,6 +31,9 @@
     <div class="form-container">
         <form action="/admin/update_student/{{ student.id }}" method="post">
             <input type="text" name="student_name" value="{{ student.name }}" required>
+            <input type="text" name="diploma" value="{{ student.diploma }}" required>
+            <input type="number" name="year_of_entry" value="{{ student.year_of_entry }}" required>
+            <input type="email" name="email" value="{{ student.email }}" required>
             <input type="number" name="student_points" value="{{ student.points }}" required>
             <button type="submit">Update Student</button>
         </form>
