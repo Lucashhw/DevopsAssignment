@@ -23,19 +23,37 @@ redeemable_items = [
 def home():
     return render_template('login.html')
 
+
+
+
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
-    # Check if username and password match
-    if username in users and users[username] == password:
+
+    if not username or not password:
+        return render_template('login.html', error="Invalid username or password")
+
+    elif username not in users:
+        return render_template('login.html', error="Invalid username")  # Specific error for invalid username
+    elif users[username] != password:
+        return render_template('login.html', error="Invalid password")  # Specific error for invalid password
+    else:
         if username == 'admin':
             return redirect(url_for('admin_page'))
         else:
             return redirect(url_for('student_page'))
-    else:
-        # Pass an error message to the template
-        return render_template('login.html', error="Invalid username or password")
+
+
+
+
+@app.route('/recover_password', methods=['GET', 'POST'])
+def recover_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        # Add logic to handle password recovery (e.g., send email)
+        return render_template('recover_password.html', message="Password recovery instructions sent to your email.")
+    return render_template('recover_password.html')
 
 @app.route('/admin')
 def admin_page():
