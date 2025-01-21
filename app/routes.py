@@ -1,3 +1,4 @@
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from app import app
@@ -6,6 +7,9 @@ from io import TextIOWrapper
 
 # Dummy user data for testing
 users = {
+    'admin': 'admin',  # Admin login
+    'A1234567X': 'student',  # Student John Tan
+    'A1234568Y': 'student',  # Student Sarah Lim
     'admin': 'admin',  # Admin login
     'A1234567X': 'student',  # Student John Tan
     'A1234568Y': 'student',  # Student Sarah Lim
@@ -40,6 +44,9 @@ redeemable_items = [
 # Dummy redeemed items for testing (replace with database later)
 redeemed_items = []
 
+# Dummy redeemed items for testing (replace with database later)
+redeemed_items = []
+
 @app.route('/')
 def home():
     return render_template('login.html')
@@ -63,6 +70,12 @@ def login():
         if username == 'admin':
             return redirect(url_for('admin_page'))
         else:
+            # Find the student by username (replace with database query later)
+            student = next((s for s in students if s['id'] == username), None)
+            if student:
+                return redirect(url_for('student_page', student_id=student['id']))
+            else:
+                return render_template('login.html', error="Student not found")
             return redirect(url_for('student_page'))
 
 
@@ -202,11 +215,44 @@ def student_page(student_id):
         return render_template('student.html', student=student)  # Pass the student object here
     else:
         return "Student not found", 404
+@app.route('/student/<student_id>')
+def student_page(student_id):
+    # Find the student by ID (replace with database query later)
+    student = next((s for s in students if s['id'] == student_id), None)
+    if student:
+        return render_template('student.html', student=student)  # Pass the student object here
+    else:
+        return "Student not found", 404
 
 @app.route('/redeemable_items')
 def redeemable_items_page():
     return render_template('redeemable_items.html', redeemable_items=redeemable_items)
+    return render_template('redeemable_items.html', redeemable_items=redeemable_items)
 
+@app.route('/redeemed_items')
+def redeemed_items_page():
+    return render_template('redeemed_items.html', redeemed_items=redeemed_items)
+
+@app.route('/redeem_item/<item_id>', methods=['POST'])
+def redeem_item(item_id):
+    # Find the item by ID (replace with database query later)
+    item = next((i for i in redeemable_items if i['id'] == int(item_id)), None)
+    if item:
+        # Check if the student has enough points (replace with database query later)
+        student = students[0]  # Assuming the first student is the one redeeming
+        if student['points'] >= item['points_required']:
+            # Deduct points and add to redeemed items
+            student['points'] -= item['points_required']
+            redeemed_items.append({
+                'name': item['name'],
+                'points_used': item['points_required'],
+                'date_redeemed': '2023-10-01'  # Replace with actual date
+            })
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Not enough points'})
+    else:
+        return jsonify({'success': False, 'message': 'Item not found'})
 @app.route('/redeemed_items')
 def redeemed_items_page():
     return render_template('redeemed_items.html', redeemed_items=redeemed_items)
