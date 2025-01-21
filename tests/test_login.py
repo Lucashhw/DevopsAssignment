@@ -1,93 +1,86 @@
-import unittest
-from app import app  # Import the Flask app
+import pytest
+from app import app  # Use absolute import
 
-class TestLoginPage(unittest.TestCase):
-    def setUp(self):
-        # Create a test client
-        self.app = app.test_client()
-        # Propagate exceptions to the test client
-        self.app.testing = True
+@pytest.fixture
+def client():
+    # Create a test client
+    app.testing = True
+    return app.test_client()
 
-    def test_valid_admin_login(self):
-        # Test valid admin login
-        response = self.app.post('/login', data=dict(
-            username='admin',
-            password='admin'
-        ), follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Admin Page', response.data)
+def test_valid_admin_login(client):
+    # Test valid admin login
+    response = client.post('/login', data=dict(
+        username='admin',
+        password='admin'
+    ), follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Admin Page' in response.data
 
-    def test_valid_student_login(self):
-        # Test valid student login
-        response = self.app.post('/login', data=dict(
-            username='student',
-            password='student'
-        ), follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Student Page', response.data)
+def test_valid_student_login(client):
+    # Test valid student login
+    response = client.post('/login', data=dict(
+        username='student',
+        password='student'
+    ), follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Student Page' in response.data
 
-    def test_invalid_login(self):
-        # Test invalid login
-        response = self.app.post('/login', data=dict(
-            username='wrong',
-            password='wrong'
-        ))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Invalid username', response.data)
+def test_invalid_login(client):
+    # Test invalid login
+    response = client.post('/login', data=dict(
+        username='wrong',
+        password='wrong'
+    ))
+    assert response.status_code == 200
+    assert b'Invalid username' in response.data
 
+def test_empty_fields(client):
+    # Test empty username and password
+    response = client.post('/login', data=dict(
+        username='',
+        password=''
+    ))
+    assert response.status_code == 200
+    assert b'Invalid username or password' in response.data
 
+def test_invalid_username(client):
+    # Test invalid username
+    response = client.post('/login', data=dict(
+        username='wrong_username',  # Invalid username
+        password='admin'  # Valid password
+    ))
+    assert response.status_code == 200
+    assert b'Invalid username' in response.data  # Check for the specific error message
 
-    def test_empty_fields(self):
-        # Test empty username and password
-        response = self.app.post('/login', data=dict(
-            username='',
-            password=''
-        ))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Invalid username or password', response.data)
+def test_invalid_password(client):
+    # Test invalid password
+    response = client.post('/login', data=dict(
+        username='admin',  # Valid username
+        password='wrong_password'  # Invalid password
+    ))
+    assert response.status_code == 200
+    assert b'Invalid password' in response.data  # Check for the specific error message
 
-    def test_invalid_username(self):
-        # Test invalid username
-        response = self.app.post('/login', data=dict(
-            username='wrong_username',  # Invalid username
-            password='admin'  # Valid password
-        ))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Invalid username', response.data)  # Check for the specific error message
+def test_recover_password_link(client):
+    # Test recover password link
+    response = client.get('/')
+    assert response.status_code == 200
+    assert b'href="/recover_password"' in response.data
 
+def test_redirect_after_admin_login(client):
+    # Test redirect to admin page after successful login
+    response = client.post('/login', data=dict(
+        username='admin',
+        password='admin'
+    ), follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Admin Page' in response.data
 
-    def test_invalid_password(self):
-        # Test invalid password
-        response = self.app.post('/login', data=dict(
-            username='admin',  # Valid username
-            password='wrong_password'  # Invalid password
-        ))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Invalid password', response.data)  # Check for the specific error message
-
-    def test_recover_password_link(self):
-        # Test recover password link
-        response = self.app.get('/')
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'href="/recover_password"', response.data)
-
-    def test_redirect_after_admin_login(self):
-        # Test redirect to admin page after successful login
-        response = self.app.post('/login', data=dict(
-            username='admin',
-            password='admin'
-        ), follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Admin Page', response.data)
-
-    def test_redirect_after_student_login(self):
-        # Test redirect to student page after successful login
-        response = self.app.post('/login', data=dict(
-            username='student',
-            password='student'
-        ), follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Student Page', response.data)
-
-if __name__ == '__main__':
-    unittest.main()
+def test_redirect_after_student_login(client):
+    # Test redirect to student page after successful login
+    response = client.post('/login', data=dict(
+        username='student',
+        password='student'
+    ), follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Student Page' in response.data
