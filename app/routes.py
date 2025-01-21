@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from app import app
+import csv
+from io import TextIOWrapper
 
 # Dummy user data for testing
 users = {
@@ -93,6 +95,47 @@ def create_student():
     })
     
     return redirect(url_for('admin_page'))
+
+
+
+@app.route('/admin/upload_csv', methods=['POST'])
+def upload_csv():
+    if 'file' not in request.files:
+        flash('No file uploaded', 'error')
+        return redirect(url_for('admin_page'))
+
+    file = request.files['file']
+    if file.filename == '':
+        flash('No file selected', 'error')
+        return redirect(url_for('admin_page'))
+
+    if file and file.filename.endswith('.csv'):
+        try:
+            csv_data = csv.reader(TextIOWrapper(file, 'utf-8'))
+            next(csv_data)  # Skip header row
+            for row in csv_data:
+                if len(row) == 6:
+                    student_id, student_name, diploma, year_of_entry, email, student_points = row
+                    students.append({
+                        'id': student_id,
+                        'name': student_name,
+                        'diploma': diploma,
+                        'year_of_entry': int(year_of_entry),
+                        'email': email,
+                        'points': int(student_points)
+                    })
+                else:
+                    flash(f'Invalid row: {row}. Skipping.', 'warning')
+            flash('CSV file uploaded successfully', 'success')
+        except Exception as e:
+            flash(f'Error processing CSV file: {str(e)}', 'error')
+    else:
+        flash('Invalid file type. Please upload a CSV file.', 'error')
+
+    return redirect(url_for('admin_page'))
+
+
+
 
 @app.route('/admin/edit_student/<student_id>')
 def edit_student(student_id):
