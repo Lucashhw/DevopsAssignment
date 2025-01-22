@@ -1,6 +1,6 @@
 import io
 import pytest
-from app import app, students  # Use absolute import
+from app import app, students, redeemable_items, redeemed_items
 
 @pytest.fixture
 def client():
@@ -9,10 +9,15 @@ def client():
     return app.test_client()
 
 @pytest.fixture(autouse=True)
-def reset_students():
-    # Reset the students list to its initial state before each test
-    global students
-    students = [
+def reset_state():
+    """
+    Reset the application state before each test.
+    """
+    global students, redeemable_items, redeemed_items
+
+    # Reset students to their initial state
+    students.clear()
+    students.extend([
         {
             'id': 'A1234567X',
             'name': 'John Tan',
@@ -29,8 +34,19 @@ def reset_students():
             'email': 'sarah.lim.2023@example.edu',
             'points': 80
         }
-    ]
+    ])
 
+    # Reset redeemable_items to their initial state
+    redeemable_items.clear()
+    redeemable_items.extend([
+        {'id': 1, 'name': 'Book', 'points_required': 100, 'quantity': 10},
+        {'id': 2, 'name': 'Pen', 'points_required': 50, 'quantity': 20},
+    ])
+
+    # Reset redeemed_items to their initial state
+    redeemed_items.clear()
+
+    
 def test_create_student(client):
     # Test creating a new student with all fields
     response = client.post('/admin/create_student', data=dict(
