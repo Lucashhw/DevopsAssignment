@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redeemed Items</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Redeemed Items</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Points Used</th>
+                <th>Date Redeemed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in redeemed_items %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.points_used }}</td>
+                <td>{{ item.date_redeemed }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center;">No items redeemed yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Back to Student Page -->
+    <a href="/student/{{ student.id }}" style="display: block; margin-top: 20px; text-align: center; text-decoration: none; color: #28a745;">
+        Back to Student Page
+    </a>
+</body>
+</html>

@@ -1,16 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from app import app
 import csv
 from io import TextIOWrapper
 
 # Dummy user data for testing
 users = {
-    'admin': 'admin',  # Admin login
-    'A1234567X': 'student',  # Student John Tan
-    'A1234568Y': 'student',  # Student Sarah Lim
-    'admin': 'admin',  # Admin login
+    'admin': 'admin',
     'A1234567X': 'student',  # Student John Tan
     'A1234568Y': 'student',  # Student Sarah Lim
 }
@@ -44,8 +39,6 @@ redeemable_items = [
 # Dummy redeemed items for testing (replace with database later)
 redeemed_items = []
 
-# Dummy redeemed items for testing (replace with database later)
-redeemed_items = []
 
 @app.route('/')
 def home():
@@ -59,27 +52,37 @@ def login():
     username = request.form['username']
     password = request.form['password']
 
+    # Debug: Print the student's points before login
+    student = next((s for s in students if s['id'] == username), None)
+    if student:
+        print(f"Before login: Student points = {student['points']}")  # Debug statement
+        print(f"Before login: Student username = {student['id']}")  # Debug statement
+
+    # Check if username and password are provided
     if not username or not password:
         return render_template('login.html', error="Invalid username or password")
 
-    elif username not in users:
+    # Check if username exists in the users dictionary
+    if username not in users:
         return render_template('login.html', error="Invalid username")  # Specific error for invalid username
-    elif users[username] != password:
+
+    # Check if the password matches
+    if users[username] != password:
         return render_template('login.html', error="Invalid password")  # Specific error for invalid password
+
+    # If username and password are valid
+    if username == 'admin':
+        return redirect(url_for('admin_page'))  # Redirect admin to the admin page
     else:
-        if username == 'admin':
-            return redirect(url_for('admin_page'))
+        # Find the student by username (replace with database query later)
+        student = next((s for s in students if s['id'] == username), None)
+        if student:
+            # Debug: Print the student's points after login
+            print(f"After login: Student points = {student['points']}")  # Debug statement
+            print(f"After login: Student username = {student['id']}")  # Debug statement
+            return redirect(url_for('student_page', student_id=student['id']))  # Redirect student to the student page
         else:
-            # Find the student by username (replace with database query later)
-            student = next((s for s in students if s['id'] == username), None)
-            if student:
-                return redirect(url_for('student_page', student_id=student['id']))
-            else:
-                return render_template('login.html', error="Student not found")
-            return redirect(url_for('student_page'))
-
-
-
+            return render_template('login.html', error="Student not found")  # Error if student ID is not in the students list
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
@@ -88,15 +91,6 @@ def recover_password():
         # Add logic to handle password recovery (e.g., send email)
         return render_template('recover_password.html', message="Password recovery instructions sent to your email.")
     return render_template('recover_password.html')
-            # Find the student by username (replace with database query later)
-            student = next((s for s in students if s['id'] == username), None)
-            if student:
-                return redirect(url_for('student_page', student_id=student['id']))
-            else:
-                return render_template('login.html', error="Student not found")
-    else:
-        # Pass an error message to the template
-        return render_template('login.html', error="Invalid username or password")
 
 @app.route('/admin')
 def admin_page():
@@ -215,65 +209,55 @@ def student_page(student_id):
         return render_template('student.html', student=student)  # Pass the student object here
     else:
         return "Student not found", 404
-@app.route('/student/<student_id>')
-def student_page(student_id):
+
+
+@app.route('/student/<student_id>/redeemable_items')
+def redeemable_items_page(student_id):
     # Find the student by ID (replace with database query later)
     student = next((s for s in students if s['id'] == student_id), None)
     if student:
-        return render_template('student.html', student=student)  # Pass the student object here
+        return render_template('redeemable_items.html', student=student, redeemable_items=redeemable_items)
     else:
         return "Student not found", 404
 
-@app.route('/redeemable_items')
-def redeemable_items_page():
-    return render_template('redeemable_items.html', redeemable_items=redeemable_items)
-    return render_template('redeemable_items.html', redeemable_items=redeemable_items)
-
-@app.route('/redeemed_items')
-def redeemed_items_page():
-    return render_template('redeemed_items.html', redeemed_items=redeemed_items)
-
-@app.route('/redeem_item/<item_id>', methods=['POST'])
-def redeem_item(item_id):
-    # Find the item by ID (replace with database query later)
-    item = next((i for i in redeemable_items if i['id'] == int(item_id)), None)
-    if item:
-        # Check if the student has enough points (replace with database query later)
-        student = students[0]  # Assuming the first student is the one redeeming
-        if student['points'] >= item['points_required']:
-            # Deduct points and add to redeemed items
-            student['points'] -= item['points_required']
-            redeemed_items.append({
-                'name': item['name'],
-                'points_used': item['points_required'],
-                'date_redeemed': '2023-10-01'  # Replace with actual date
-            })
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'message': 'Not enough points'})
+@app.route('/student/<student_id>/redeemed_items')
+def redeemed_items_page(student_id):
+    # Find the student by ID (replace with database query later)
+    student = next((s for s in students if s['id'] == student_id), None)
+    if student:
+        # Filter redeemed items for the current student
+        student_redeemed_items = [item for item in redeemed_items if item['student_id'] == student_id]
+        return render_template('redeemed_items.html', student=student, redeemed_items=student_redeemed_items)
     else:
-        return jsonify({'success': False, 'message': 'Item not found'})
-@app.route('/redeemed_items')
-def redeemed_items_page():
-    return render_template('redeemed_items.html', redeemed_items=redeemed_items)
+        return "Student not found", 404
+
 
 @app.route('/redeem_item/<item_id>', methods=['POST'])
 def redeem_item(item_id):
+    # Get the student ID from the request (e.g., from JSON payload or form data)
+    student_id = request.json.get('student_id')  # Assuming JSON payload is sent
+
     # Find the item by ID (replace with database query later)
     item = next((i for i in redeemable_items if i['id'] == int(item_id)), None)
     if item:
-        # Check if the student has enough points (replace with database query later)
-        student = students[0]  # Assuming the first student is the one redeeming
-        if student['points'] >= item['points_required']:
-            # Deduct points and add to redeemed items
-            student['points'] -= item['points_required']
-            redeemed_items.append({
-                'name': item['name'],
-                'points_used': item['points_required'],
-                'date_redeemed': '2023-10-01'  # Replace with actual date
-            })
-            return jsonify({'success': True})
+        # Find the student by ID (replace with database query later)
+        student = next((s for s in students if s['id'] == student_id), None)
+        if student:
+            print(f"Before redemption: Student points = {student['points']}")  # Debug statement
+            if student['points'] >= item['points_required']:
+                # Deduct points and add to redeemed items
+                student['points'] -= item['points_required']
+                redeemed_items.append({
+                    'student_id': student_id,  # Track which student redeemed the item
+                    'name': item['name'],
+                    'points_used': item['points_required'],
+                    'date_redeemed': '2023-10-01'  # Replace with actual date
+                })
+                print(f"After redemption: Student points = {student['points']}")  # Debug statement
+                return jsonify({'success': True, 'points': student['points']})  # Return updated points
+            else:
+                return jsonify({'success': False, 'message': 'Not enough points'})
         else:
-            return jsonify({'success': False, 'message': 'Not enough points'})
+            return jsonify({'success': False, 'message': 'Student not found'})
     else:
         return jsonify({'success': False, 'message': 'Item not found'})
