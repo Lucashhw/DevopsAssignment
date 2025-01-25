@@ -14,6 +14,12 @@ def reset_state():
     """
     global students, redeemable_items, redeemed_items
 
+    # Debug: Print the state before resetting
+    print("\nBefore reset:")
+    print("Students:", students)
+    print("Redeemable Items:", redeemable_items)
+    print("Redeemed Items:", redeemed_items)
+
     # Reset students to their initial state
     students.clear()
     students.extend([
@@ -23,7 +29,7 @@ def reset_state():
             'diploma': 'Diploma in IT',
             'year_of_entry': 2024,
             'email': 'john.tan.2024@example.edu',
-            'points': 50
+            'points': 50  # Initial points
         },
         {
             'id': 'A1234568Y',
@@ -31,19 +37,50 @@ def reset_state():
             'diploma': 'Diploma in Business',
             'year_of_entry': 2023,
             'email': 'sarah.lim.2023@example.edu',
-            'points': 80
+            'points': 80  # Initial points
+        },
+        {
+            'id': 'A1234569Z',
+            'name': 'Alice Wong',
+            'diploma': 'Diploma in Design',
+            'year_of_entry': 2025,
+            'email': 'alice.wong.2025@example.edu',
+            'points': 100  # Initial points
+        },
+        {
+            'id': 'A1234570A',
+            'name': 'Bob Lee',
+            'diploma': 'Diploma in Engineering',
+            'year_of_entry': 2022,
+            'email': 'bob.lee.2022@example.edu',
+            'points': 120  # Initial points
+        },
+        {
+            'id': 'A1234571B',
+            'name': 'Charlie Ng',
+            'diploma': 'Diploma in Science',
+            'year_of_entry': 2021,
+            'email': 'charlie.ng.2021@example.edu',
+            'points': 90  # Initial points
         }
     ])
 
     # Reset redeemable_items to their initial state
     redeemable_items.clear()
     redeemable_items.extend([
-        {'id': 1, 'name': 'Book', 'points_required': 100, 'quantity': 10},
-        {'id': 2, 'name': 'Pen', 'points_required': 50, 'quantity': 20},
+        {'id': 1, 'name': 'AAA', 'points_required': 10, 'quantity': 5},
+        {'id': 2, 'name': 'BBB', 'points_required': 200, 'quantity': 3},
+        {'id': 3, 'name': 'CCC', 'points_required': 300, 'quantity': 2},
     ])
 
     # Reset redeemed_items to their initial state
     redeemed_items.clear()
+
+    # Debug: Print the state after resetting
+    print("After reset:")
+    print("Students:", students)
+    print("Redeemable Items:", redeemable_items)
+    print("Redeemed Items:", redeemed_items)
 
 def test_valid_admin_login(client):
     # Test valid admin login

@@ -24,6 +24,16 @@
         th {
             background-color: #f4f4f4;
         }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #28a745;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +62,7 @@
     </table>
 
     <!-- Back to Student Page -->
-    <a href="/student/{{ student.id }}" style="display: block; margin-top: 20px; text-align: center; text-decoration: none; color: #28a745;">
+    <a href="/student/{{ student.id }}" class="back-link">
         Back to Student Page
     </a>
 </body>

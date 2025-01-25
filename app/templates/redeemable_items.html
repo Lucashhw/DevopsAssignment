@@ -35,6 +35,24 @@
         .redeem-button:hover {
             background-color: #218838;
         }
+        .redeem-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #28a745;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .out-of-stock {
+            color: #888;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -50,37 +68,49 @@
         </thead>
         <tbody>
             {% for item in redeemable_items %}
-            <tr>
+            <tr data-item-id="{{ item.id }}">
                 <td>{{ item.name }}</td>
                 <td>{{ item.points_required }}</td>
-                <td>{{ item.quantity }}</td>
+                <td class="{% if item.quantity <= 0 %}out-of-stock{% endif %}">{{ item.quantity }}</td>
                 <td>
-                    <button class="redeem-button" onclick="redeemItem('{{ item.id }}')">Redeem</button>
+                    <button class="redeem-button" onclick="redeemItem('{{ item.id }}')" {% if item.quantity <= 0 %}disabled{% endif %}>
+                        {% if item.quantity <= 0 %}Out of Stock{% else %}Redeem{% endif %}
+                    </button>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
+    <!-- Back to Student Page Link -->
+    <a href="/student/{{ student.id }}" class="back-link">Back to Student Page</a>
+
     <script>
         function redeemItem(itemId) {
-            // Get the student ID from the URL
-            const studentId = window.location.pathname.split('/')[2]; // Assuming the URL is /student/<student_id>/redeemable_items
-    
-            // Send the redemption request with the student ID
             fetch(`/redeem_item/${itemId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    student_id: studentId  // Pass the student ID here
+                    student_id: '{{ student.id }}'  // Pass the student ID here
                 })
             }).then(response => response.json())
               .then(data => {
                   if (data.success) {
                       alert('Item redeemed successfully!');
-                      window.location.reload();  // Refresh the page to update the points and item list
+                      // Update the item quantity dynamically
+                      const itemRow = document.querySelector(`tr[data-item-id="${itemId}"]`);
+                      if (itemRow) {
+                          const quantityCell = itemRow.querySelector('td:nth-child(3)');
+                          const newQuantity = parseInt(quantityCell.textContent) - 1;
+                          quantityCell.textContent = newQuantity;
+                          if (newQuantity <= 0) {
+                              const redeemButton = itemRow.querySelector('.redeem-button');
+                              redeemButton.disabled = true;
+                              redeemButton.textContent = 'Out of Stock';
+                          }
+                      }
                   } else {
                       alert('Failed to redeem item: ' + data.message);
                   }
