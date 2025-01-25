@@ -2,50 +2,77 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from app import app
 import csv
 from io import TextIOWrapper
+from datetime import datetime  # Import the datetime module
+from copy import deepcopy
 
 # Dummy user data for testing
 users = {
     'admin': 'admin',
     'A1234567X': 'student',  # Student John Tan
     'A1234568Y': 'student',  # Student Sarah Lim
+    'A1234569Z': 'student',  # Student Alice Wong
+    'A1234570A': 'student',  # Student Bob Lee
+    'A1234571B': 'student',  # Student Charlie Ng
+
 }
 
 # Dummy student data for testing (replace with database later)
 students = [
     {
-        'id': 'A1234567X',
-        'name': 'John Tan',
-        'diploma': 'Diploma in IT',
-        'year_of_entry': 2024,
-        'email': 'john.tan.2024@example.edu',
-        'points': 50
-    },
-    {
-        'id': 'A1234568Y',
-        'name': 'Sarah Lim',
-        'diploma': 'Diploma in Business',
-        'year_of_entry': 2023,
-        'email': 'sarah.lim.2023@example.edu',
-        'points': 80
-    }
+            'id': 'A1234567X',
+            'name': 'John Tan',
+            'diploma': 'Diploma in IT',
+            'year_of_entry': 2024,
+            'email': 'john.tan.2024@example.edu',
+            'points': 50  # Initial points
+        },
+        {
+            'id': 'A1234568Y',
+            'name': 'Sarah Lim',
+            'diploma': 'Diploma in Business',
+            'year_of_entry': 2023,
+            'email': 'sarah.lim.2023@example.edu',
+            'points': 80  # Initial points
+        },
+        {
+            'id': 'A1234569Z',
+            'name': 'Alice Wong',
+            'diploma': 'Diploma in Design',
+            'year_of_entry': 2025,
+            'email': 'alice.wong.2025@example.edu',
+            'points': 100  # Initial points
+        },
+        {
+            'id': 'A1234570A',
+            'name': 'Bob Lee',
+            'diploma': 'Diploma in Engineering',
+            'year_of_entry': 2022,
+            'email': 'bob.lee.2022@example.edu',
+            'points': 120  # Initial points
+        },
+        {
+            'id': 'A1234571B',
+            'name': 'Charlie Ng',
+            'diploma': 'Diploma in Science',
+            'year_of_entry': 2021,
+            'email': 'charlie.ng.2021@example.edu',
+            'points': 90  # Initial points
+        }
 ]
 
-# Dummy redeemable items for testing (replace with database later)
+# Dummy redeemable items with quantity
 redeemable_items = [
-    {'id': 1, 'name': 'Book', 'points_required': 100, 'quantity': 10},
-    {'id': 2, 'name': 'Pen', 'points_required': 50, 'quantity': 20},
+    {'id': 1, 'name': 'AAA', 'points_required': 10, 'quantity': 5},
+    {'id': 2, 'name': 'BBB', 'points_required': 200, 'quantity': 3},
+    {'id': 3, 'name': 'CCC', 'points_required': 300, 'quantity': 2},
 ]
 
 # Dummy redeemed items for testing (replace with database later)
 redeemed_items = []
 
-
 @app.route('/')
 def home():
     return render_template('login.html')
-
-
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -117,8 +144,6 @@ def create_student():
     
     return redirect(url_for('admin_page'))
 
-
-
 @app.route('/admin/upload_csv', methods=['POST'])
 def upload_csv():
     if 'file' not in request.files:
@@ -134,29 +159,38 @@ def upload_csv():
         try:
             csv_data = csv.reader(TextIOWrapper(file, 'utf-8'))
             next(csv_data)  # Skip header row
+
+            has_invalid_rows = False  # Flag to track invalid rows
+
             for row in csv_data:
                 if len(row) == 6:
                     student_id, student_name, diploma, year_of_entry, email, student_points = row
-                    students.append({
-                        'id': student_id,
-                        'name': student_name,
-                        'diploma': diploma,
-                        'year_of_entry': int(year_of_entry),
-                        'email': email,
-                        'points': int(student_points)
-                    })
+                    # Check if all fields are non-empty
+                    if student_id and student_name and diploma and year_of_entry and email and student_points:
+                        students.append({
+                            'id': student_id,
+                            'name': student_name,
+                            'diploma': diploma,
+                            'year_of_entry': int(year_of_entry),
+                            'email': email,
+                            'points': int(student_points)
+                        })
+                    else:
+                        has_invalid_rows = True  # Mark as invalid
                 else:
-                    flash(f'Invalid row: {row}. Skipping.', 'warning')
-            flash('CSV file uploaded successfully', 'success')
+                    has_invalid_rows = True  # Mark as invalid
+
+            # Check if there are any invalid rows
+            if has_invalid_rows:
+                flash('Invalid CSV file. Please ensure all rows have the correct format.', 'error')
+            else:
+                flash('CSV file uploaded successfully.', 'success')
         except Exception as e:
             flash(f'Error processing CSV file: {str(e)}', 'error')
     else:
         flash('Invalid file type. Please upload a CSV file.', 'error')
 
     return redirect(url_for('admin_page'))
-
-
-
 
 @app.route('/admin/edit_student/<student_id>')
 def edit_student(student_id):
@@ -210,7 +244,6 @@ def student_page(student_id):
     else:
         return "Student not found", 404
 
-
 @app.route('/student/<student_id>/redeemable_items')
 def redeemable_items_page(student_id):
     # Find the student by ID (replace with database query later)
@@ -231,7 +264,6 @@ def redeemed_items_page(student_id):
     else:
         return "Student not found", 404
 
-
 @app.route('/redeem_item/<item_id>', methods=['POST'])
 def redeem_item(item_id):
     # Get the student ID from the request (e.g., from JSON payload or form data)
@@ -244,17 +276,25 @@ def redeem_item(item_id):
         student = next((s for s in students if s['id'] == student_id), None)
         if student:
             print(f"Before redemption: Student points = {student['points']}")  # Debug statement
-            if student['points'] >= item['points_required']:
+            if student['points'] >= item['points_required'] and item['quantity'] > 0:
                 # Deduct points and add to redeemed items
                 student['points'] -= item['points_required']
+                item['quantity'] -= 1  # Decrement item quantity
+
+                # Get the current date and time
+                current_date = datetime.now().strftime('%Y-%m-%d')  # Format: YYYY-MM-DD
+
                 redeemed_items.append({
                     'student_id': student_id,  # Track which student redeemed the item
                     'name': item['name'],
                     'points_used': item['points_required'],
-                    'date_redeemed': '2023-10-01'  # Replace with actual date
+                    'date_redeemed': current_date  # Use the actual date
                 })
+
                 print(f"After redemption: Student points = {student['points']}")  # Debug statement
                 return jsonify({'success': True, 'points': student['points']})  # Return updated points
+            elif item['quantity'] <= 0:
+                return jsonify({'success': False, 'message': 'Item out of stock'})
             else:
                 return jsonify({'success': False, 'message': 'Not enough points'})
         else:

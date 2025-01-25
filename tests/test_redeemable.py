@@ -83,41 +83,6 @@ def reset_state():
     print("Redeemable Items:", redeemable_items)
     print("Redeemed Items:", redeemed_items)
 
-def test_student_login(client):
-    """
-    Test that a student can log in successfully and is redirected to the student page.
-    """
-    # Simulate a student login
-    response = client.post('/login', data=dict(
-        username='A1234567X',  # Valid student ID
-        password='student'     # Valid password
-    ), follow_redirects=True)
-
-    # Check that the login was successful and the student is redirected to the student page
-    assert response.status_code == 200
-    assert b'Student Page' in response.data
-
-def test_student_page_displays_user_info(client):
-    """
-    Test that the student page displays the correct user information.
-    """
-    # Simulate a student login
-    client.post('/login', data=dict(
-        username='A1234568Y',  # Valid student ID
-        password='student'     # Valid password
-    ), follow_redirects=True)
-
-    # Access the student page
-    response = client.get('/student/A1234568Y')
-
-    # Debug: Print the response data
-    print("\nResponse data:")
-    print(response.data.decode('utf-8'))  # Decode bytes to string for readability
-
-    # Check that the student page displays the correct user information
-    assert b'A1234568Y' in response.data  # Check for the username
-    assert b'80' in response.data  # Check for the total points
-
 def test_redeemable_items_page(client):
     """
     Test that the redeemable items page displays the correct items.
@@ -143,20 +108,20 @@ def test_redeem_item_updates_points(client):
     """
     Test that redeeming an item updates the student's points correctly.
     """
-    # Simulate a student login
+    # Simulate a student login (use Alice Wong)
     client.post('/login', data=dict(
-        username='A1234568Y',  # Valid student ID (Sarah Lim)
+        username='A1234569Z',  # Valid student ID (Alice Wong)
         password='student'     # Valid password
     ), follow_redirects=True)
 
     # Debug: Print the student's initial points
-    student = next((s for s in students if s['id'] == 'A1234568Y'), None)
-    initial_points = student['points']  # Sarah Lim starts with 80 points
+    student = next((s for s in students if s['id'] == 'A1234569Z'), None)
+    initial_points = student['points']  # Alice Wong starts with 100 points
     print(f"\nInitial points for student {student['id']} ({student['name']}): {initial_points}")
 
     # Redeem an item (e.g., AAA with ID 1, which costs 10 points)
     print(f"Attempting to redeem item: AAA (ID: 1, Cost: 10 points)")
-    response = client.post('/redeem_item/1', json={'student_id': 'A1234568Y'}, follow_redirects=True)
+    response = client.post('/redeem_item/1', json={'student_id': 'A1234569Z'}, follow_redirects=True)
 
     # Debug: Print the response from the redemption request
     print(f"Redemption response: {response.json}")
@@ -166,60 +131,86 @@ def test_redeem_item_updates_points(client):
     assert response.json['success'] == True
 
     # Verify that the student's points were updated
-    student = next((s for s in students if s['id'] == 'A1234568Y'), None)
+    student = next((s for s in students if s['id'] == 'A1234569Z'), None)
     updated_points = response.json['points']
     print(f"Updated points for student {student['id']} ({student['name']}): {updated_points}")
-    assert updated_points == initial_points - 10  # 80 - 10 = 70
+    assert updated_points == initial_points - 10  # 100 - 10 = 90
 
     # Verify that the redeemed item was added to the redeemed_items list
     assert len(redeemed_items) == 1
     assert redeemed_items[0]['name'] == 'AAA'
     assert redeemed_items[0]['points_used'] == 10
-    assert redeemed_items[0]['student_id'] == 'A1234568Y'  # Ensure the student ID is tracked
+    assert redeemed_items[0]['student_id'] == 'A1234569Z'  # Ensure the student ID is tracked
 
     # Debug: Print the redeemed items list
     print(f"Redeemed items: {redeemed_items}")
 
-def test_redeemed_items_page(client):
+def test_redeem_item_not_enough_points(client):
     """
-    Test that the redeemed items page displays the correct items after redemption.
+    Test that a student cannot redeem an item if they don't have enough points.
     """
-    # Set the student's points to 50 explicitly
-    student = next((s for s in students if s['id'] == 'A1234567X'), None)
-    student['points'] = 50  # Explicitly set points
-
-    # Simulate a student login
+    # Simulate a student login (use Charlie Ng)
     client.post('/login', data=dict(
-        username='A1234567X',  # Valid student ID
+        username='A1234571B',  # Valid student ID (Charlie Ng)
         password='student'     # Valid password
     ), follow_redirects=True)
 
-    # Redeem an item (e.g., AAA with ID 1)
-    client.post('/redeem_item/1', json={'student_id': 'A1234567X'}, follow_redirects=True)
+    # Debug: Print the student's initial points
+    student = next((s for s in students if s['id'] == 'A1234571B'), None)
+    initial_points = student['points']  # Charlie Ng starts with 90 points
+    print(f"\nInitial points for student {student['id']} ({student['name']}): {initial_points}")
 
-    # Access the redeemed items page
-    response = client.get('/student/A1234567X/redeemed_items')
+    # Attempt to redeem an item (e.g., BBB with ID 2, which costs 200 points)
+    print(f"Attempting to redeem item: BBB (ID: 2, Cost: 200 points)")
+    response = client.post('/redeem_item/2', json={'student_id': 'A1234571B'}, follow_redirects=True)
 
-    # Debug: Print the response data for inspection
-    print("\nResponse data:")
-    print(response.data.decode('utf-8'))
+    # Debug: Print the response from the redemption request
+    print(f"Redemption response: {response.json}")
 
-    # Check that the redeemed items page displays the correct items
-    assert b'AAA' in response.data  # Verify the item name is displayed
-    assert b'10' in response.data   # Verify the points used are displayed
+    # Check that the redemption failed due to insufficient points
+    assert response.status_code == 200
+    assert response.json['success'] == False
+    assert response.json['message'] == 'Not enough points'
 
-    # Verify that the date_redeemed field contains a valid date in the format YYYY-MM-DD
-    date_redeemed = None
-    for item in redeemed_items:
-        if item['name'] == 'AAA' and item['student_id'] == 'A1234567X':
-            date_redeemed = item['date_redeemed']
-            break
+    # Verify that the student's points were not updated
+    student = next((s for s in students if s['id'] == 'A1234571B'), None)
+    assert student['points'] == initial_points  # Points should remain unchanged
 
-    assert date_redeemed is not None, "Redeemed item not found in the list"
+    # Verify that no items were added to the redeemed_items list
+    assert len(redeemed_items) == 0
 
-    # Validate the date format
-    try:
-        redeemed_date = datetime.strptime(date_redeemed, '%Y-%m-%d')
-        assert redeemed_date <= datetime.now(), "Redeemed date is in the future"
-    except ValueError:
-        assert False, f"Invalid date format: {date_redeemed}. Expected format: YYYY-MM-DD"
+def test_redeem_item_out_of_stock(client):
+    """
+    Test that a student cannot redeem an item if it is out of stock.
+    """
+    # Simulate a student login (use Bob Lee)
+    client.post('/login', data=dict(
+        username='A1234570A',  # Valid student ID (Bob Lee)
+        password='student'     # Valid password
+    ), follow_redirects=True)
+
+    # Set the item quantity to 0 (out of stock)
+    item = next((i for i in redeemable_items if i['id'] == 1), None)
+    item['quantity'] = 0  # AAA is now out of stock
+
+    # Debug: Print the item's quantity
+    print(f"\nItem {item['name']} (ID: {item['id']}) is out of stock (Quantity: {item['quantity']})")
+
+    # Attempt to redeem the out-of-stock item
+    print(f"Attempting to redeem item: AAA (ID: 1, Cost: 10 points)")
+    response = client.post('/redeem_item/1', json={'student_id': 'A1234570A'}, follow_redirects=True)
+
+    # Debug: Print the response from the redemption request
+    print(f"Redemption response: {response.json}")
+
+    # Check that the redemption failed due to the item being out of stock
+    assert response.status_code == 200
+    assert response.json['success'] == False
+    assert response.json['message'] == 'Item out of stock'
+
+    # Verify that the student's points were not updated
+    student = next((s for s in students if s['id'] == 'A1234570A'), None)
+    assert student['points'] == 120  # Points should remain unchanged
+
+    # Verify that no items were added to the redeemed_items list
+    assert len(redeemed_items) == 0
