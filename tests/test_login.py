@@ -62,13 +62,21 @@ def reset_state():
             'year_of_entry': 2021,
             'email': 'charlie.ng.2021@example.edu',
             'points': 90  # Initial points
+        },
+        {
+            'id': 'A1234572C',
+            'name': 'David Koh',
+            'diploma': 'Diploma in Arts',
+            'year_of_entry': 2020,
+            'email': 'david.koh.2020@example.edu',
+            'points': 200  # Initial Points
         }
     ])
 
     # Reset redeemable_items to their initial state
     redeemable_items.clear()
     redeemable_items.extend([
-        {'id': 1, 'name': 'AAA', 'points_required': 10, 'quantity': 5},
+        {'id': 1, 'name': 'AAA', 'points_required': 100, 'quantity': 5},
         {'id': 2, 'name': 'BBB', 'points_required': 200, 'quantity': 3},
         {'id': 3, 'name': 'CCC', 'points_required': 300, 'quantity': 2},
     ])
