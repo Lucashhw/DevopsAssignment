@@ -3,7 +3,7 @@ from app import app
 import csv
 from io import TextIOWrapper
 from datetime import datetime  # Import the datetime module
-from copy import deepcopy
+
 
 # Dummy user data for testing
 users = {
@@ -13,6 +13,7 @@ users = {
     'A1234569Z': 'student',  # Student Alice Wong
     'A1234570A': 'student',  # Student Bob Lee
     'A1234571B': 'student',  # Student Charlie Ng
+    'A1234572C': 'student'   # Student David Koh
 
 }
 
@@ -57,12 +58,20 @@ students = [
             'year_of_entry': 2021,
             'email': 'charlie.ng.2021@example.edu',
             'points': 90  # Initial points
+        },
+        {
+            'id': 'A1234572C',
+            'name': 'David Koh',
+            'diploma': 'Diploma in Arts',
+            'year_of_entry': 2020,
+            'email': 'david.koh.2020@example.edu',
+            'points': 200  # Initial Points
         }
 ]
 
 # Dummy redeemable items with quantity
 redeemable_items = [
-    {'id': 1, 'name': 'AAA', 'points_required': 10, 'quantity': 5},
+    {'id': 1, 'name': 'AAA', 'points_required': 100, 'quantity': 5},
     {'id': 2, 'name': 'BBB', 'points_required': 200, 'quantity': 3},
     {'id': 3, 'name': 'CCC', 'points_required': 300, 'quantity': 2},
 ]

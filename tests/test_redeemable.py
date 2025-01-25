@@ -63,13 +63,21 @@ def reset_state():
             'year_of_entry': 2021,
             'email': 'charlie.ng.2021@example.edu',
             'points': 90  # Initial points
+        },
+        {
+            'id': 'A1234572C',
+            'name': 'David Koh',
+            'diploma': 'Diploma in Arts',
+            'year_of_entry': 2020,
+            'email': 'david.koh.2020@example.edu',
+            'points': 200  # Initial Points
         }
     ])
 
     # Reset redeemable_items to their initial state
     redeemable_items.clear()
     redeemable_items.extend([
-        {'id': 1, 'name': 'AAA', 'points_required': 10, 'quantity': 5},
+        {'id': 1, 'name': 'AAA', 'points_required': 100, 'quantity': 5},
         {'id': 2, 'name': 'BBB', 'points_required': 200, 'quantity': 3},
         {'id': 3, 'name': 'CCC', 'points_required': 300, 'quantity': 2},
     ])
@@ -100,7 +108,7 @@ def test_redeemable_items_page(client):
     assert b'AAA' in response.data
     assert b'BBB' in response.data
     assert b'CCC' in response.data
-    assert b'10' in response.data  # Points required for AAA
+    assert b'100' in response.data  # Points required for AAA
     assert b'200' in response.data  # Points required for BBB
     assert b'300' in response.data  # Points required for CCC
 
@@ -116,11 +124,11 @@ def test_redeem_item_updates_points(client):
 
     # Debug: Print the student's initial points
     student = next((s for s in students if s['id'] == 'A1234569Z'), None)
-    initial_points = student['points']  # Alice Wong starts with 100 points
+    initial_points = student['points']  # Alice Wong starts with 200 points
     print(f"\nInitial points for student {student['id']} ({student['name']}): {initial_points}")
 
-    # Redeem an item (e.g., AAA with ID 1, which costs 10 points)
-    print(f"Attempting to redeem item: AAA (ID: 1, Cost: 10 points)")
+    # Redeem an item (e.g., AAA with ID 1, which costs 100 points)
+    print(f"Attempting to redeem item: AAA (ID: 1, Cost: 100 points)")
     response = client.post('/redeem_item/1', json={'student_id': 'A1234569Z'}, follow_redirects=True)
 
     # Debug: Print the response from the redemption request
@@ -134,12 +142,12 @@ def test_redeem_item_updates_points(client):
     student = next((s for s in students if s['id'] == 'A1234569Z'), None)
     updated_points = response.json['points']
     print(f"Updated points for student {student['id']} ({student['name']}): {updated_points}")
-    assert updated_points == initial_points - 10  # 100 - 10 = 90
+    assert updated_points == initial_points - 100  # 200 - 100 = 100
 
     # Verify that the redeemed item was added to the redeemed_items list
     assert len(redeemed_items) == 1
     assert redeemed_items[0]['name'] == 'AAA'
-    assert redeemed_items[0]['points_used'] == 10
+    assert redeemed_items[0]['points_used'] == 100
     assert redeemed_items[0]['student_id'] == 'A1234569Z'  # Ensure the student ID is tracked
 
     # Debug: Print the redeemed items list
