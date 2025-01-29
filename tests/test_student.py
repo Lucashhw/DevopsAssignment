@@ -116,20 +116,20 @@ def test_redeem_item_updates_points(client):
     """
     Test that redeeming an item updates the student's points correctly.
     """
-    # Simulate a student login (use Alice Wong)
+    # Simulate a student login (use David Koh, who has 200 points)
     client.post('/login', data=dict(
-        username='A1234569Z',  # Valid student ID (Alice Wong)
+        username='A1234572C',  # Valid student ID (David Koh)
         password='student'     # Valid password
     ), follow_redirects=True)
 
     # Debug: Print the student's initial points
-    student = next((s for s in students if s['id'] == 'A1234569Z'), None)
-    initial_points = student['points']  # Alice Wong starts with 200 points
+    student = next((s for s in students if s['id'] == 'A1234572C'), None)
+    initial_points = student['points']  # David Koh starts with 200 points
     print(f"\nInitial points for student {student['id']} ({student['name']}): {initial_points}")
 
-    # Redeem an item (e.g., AAA with ID 1, which costs 100 points)
-    print(f"Attempting to redeem item: AAA (ID: 1, Cost: 100 points)")
-    response = client.post('/redeem_item/1', json={'student_id': 'A1234569Z'}, follow_redirects=True)
+    # Redeem an item (e.g., BBB with ID 2, which costs 200 points)
+    print(f"Attempting to redeem item: BBB (ID: 2, Cost: 200 points)")
+    response = client.post('/redeem_item/2', json={'student_id': 'A1234572C'}, follow_redirects=True)
 
     # Debug: Print the response from the redemption request
     print(f"Redemption response: {response.json}")
@@ -139,16 +139,16 @@ def test_redeem_item_updates_points(client):
     assert response.json['success'] == True
 
     # Verify that the student's points were updated
-    student = next((s for s in students if s['id'] == 'A1234569Z'), None)
+    student = next((s for s in students if s['id'] == 'A1234572C'), None)
     updated_points = response.json['points']
     print(f"Updated points for student {student['id']} ({student['name']}): {updated_points}")
-    assert updated_points == initial_points - 100  # 200 - 100 = 100
+    assert updated_points == initial_points - 200  # Verify points are deducted correctly
 
     # Verify that the redeemed item was added to the redeemed_items list
     assert len(redeemed_items) == 1
-    assert redeemed_items[0]['name'] == 'AAA'
-    assert redeemed_items[0]['points_used'] == 100
-    assert redeemed_items[0]['student_id'] == 'A1234569Z'  # Ensure the student ID is tracked
+    assert redeemed_items[0]['name'] == 'BBB'
+    assert redeemed_items[0]['points_used'] == 200
+    assert redeemed_items[0]['student_id'] == 'A1234572C'  # Ensure the student ID is tracked
 
     # Debug: Print the redeemed items list
     print(f"Redeemed items: {redeemed_items}")
