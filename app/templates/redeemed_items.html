@@ -49,7 +49,7 @@
         <tbody>
             {% for item in redeemed_items %}
             <tr>
-                <td>{{ item.name }}</td>
+                <td>{{ item.item_name }}</td>
                 <td>{{ item.points_used }}</td>
                 <td>{{ item.date_redeemed }}</td>
             </tr>
@@ -60,7 +60,6 @@
             {% endfor %}
         </tbody>
     </table>
-
     <!-- Back to Student Page -->
     <a href="/student/{{ student.id }}" class="back-link">
         Back to Student Page

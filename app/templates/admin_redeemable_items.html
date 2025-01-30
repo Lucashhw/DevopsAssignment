@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Redeemable Items</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .flash-messages .flash-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .flash-messages .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash-messages .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .edit-form-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .edit-form-container.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Manage Redeemable Items</h1>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Create Redeemable Item Form -->
+        <div class="form-container card mb-4">
+            <div class="card-header">Create Redeemable Item</div>
+            <div class="card-body">
+                <form action="/admin/create_redeemable_item" method="post" class="needs-validation" novalidate>
+                    <div class="form-group">
+                        <label for="name">Item Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Item Name" required>
+                        <div class="invalid-feedback">
+                            Please provide an item name.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="points_required">Points Required</label>
+                        <input type="number" class="form-control" id="points_required" name="points_required" placeholder="Points Required" required>
+                        <div class="invalid-feedback">
+                            Please provide points required.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Quantity Available</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Quantity Available" required>
+                        <div class="invalid-feedback">
+                            Please provide quantity available.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Create Redeemable Item</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- List All Redeemable Items -->
+        <h2 class="mb-3">Redeemable Items List</h2>
+        <table class="table table-striped table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Points Required</th>
+                    <th>Quantity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in redeemable_items %}
+                <tr data-item-id="{{ item.id }}">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.points_required }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <a href="#" class="btn btn-primary btn-sm mr-2 edit-link" data-item-id="{{ item.id }}">Edit</a>
+                        <a href="#" onclick="confirmDelete('{{ item.id }}')" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Edit Redeemable Item Form -->
+        <div id="edit-form-container" class="edit-form-container card mb-4">
+            <div class="card-header">Edit Redeemable Item</div>
+            <div class="card-body">
+                <form action="" method="post" class="needs-validation" novalidate>
+                    <input type="hidden" name="item_id" value="">
+                    <div class="form-group">
+                        <label for="edit-name">Item Name</label>
+                        <input type="text" class="form-control" id="edit-name" name="name" placeholder="Item Name" required>
+                        <div class="invalid-feedback">
+                            Please provide an item name.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-points_required">Points Required</label>
+                        <input type="number" class="form-control" id="edit-points_required" name="points_required" placeholder="Points Required" required>
+                        <div class="invalid-feedback">
+                            Please provide points required.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-quantity">Quantity Available</label>
+                        <input type="number" class="form-control" id="edit-quantity" name="quantity" placeholder="Quantity Available" required>
+                        <div class="invalid-feedback">
+                            Please provide quantity available.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Update Redeemable Item</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function confirmDelete(itemId) {
+                if (confirm('Are you sure you want to delete this item?')) {
+                    window.location.href = `/admin/delete_redeemable_item/${itemId}`;
+                }
+            }
+
+            function cancelEdit() {
+                const editFormContainer = document.getElementById('edit-form-container');
+                editFormContainer.classList.remove('show');
+                // Clear the form inputs
+                editFormContainer.querySelector('form').reset();
+            }
+
+            // Logic to show the edit form when an item is clicked
+            document.addEventListener('DOMContentLoaded', function () {
+                const editLinks = document.querySelectorAll('.edit-link');
+                const editFormContainer = document.getElementById('edit-form-container');
+                const editForm = editFormContainer.querySelector('form');
+
+                editLinks.forEach(link => {
+                    link.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        const itemId = this.getAttribute('data-item-id');
+
+                        fetch(`/admin/edit_redeemable_item/${itemId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                // Fill in the form fields with the item details
+                                editForm.querySelector('input[name="item_id"]').value = data.id;
+                                editForm.querySelector('input[name="name"]').value = data.name;
+                                editForm.querySelector('input[name="points_required"]').value = data.points_required;
+                                editForm.querySelector('input[name="quantity"]').value = data.quantity;
+
+                                // Show the edit form container
+                                editFormContainer.classList.add('show');
+                                editForm.action = `/admin/update_redeemable_item/${data.id}`;
+
+                                // Initialize form validation
+                                Array.from(editForm.elements).forEach(element => {
+                                    if (element.tagName === "INPUT") {
+                                        element.addEventListener('input', function() {
+                                            const formControl = this.closest('.form-group');
+                                            if (formControl) {
+                                                formControl.classList.remove('was-validated');
+                                            }
+                                        });
+                                    }
+                                });
+
+                                editForm.addEventListener('submit', function(event) {
+                                    if (!editForm.checkValidity()) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    editForm.classList.add('was-validated');
+                                }, false);
+                            })
+                            .catch(error => {
+                                console.error('Error fetching item:', error);
+                            });
+                    });
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>
