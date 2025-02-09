@@ -22,24 +22,36 @@ def login():
         return redirect(url_for('admin_page'))
 
     student = Student.query.get(username)
-    if student:
+    if student and student.password_hash == password:
         print(f"Before login: Student points = {student.points}")  # Debug statement
         print(f"Before login: Student username = {student.id}")  # Debug statement
-
-        if password == "student":  # Assuming all students have the same password for simplicity
-            session['user_id'] = student.id
-            return redirect(url_for('student_page', student_id=student.id))
-        else:
-            return render_template('login.html', error="Invalid password")
+        session['user_id'] = student.id
+        return redirect(url_for('student_page', student_id=student.id))
     else:
         return render_template('login.html', error="Invalid username or password")
+
+
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
     if request.method == 'POST':
-        email = request.form['email']
-        # Add logic to handle password recovery (e.g., send email)
-        return render_template('recover_password.html', message="Password recovery instructions sent to your email.")
+        username = request.form.get('username')  # Get the username from the form
+        new_password = request.form.get('new_password')  # Get the new password from the form
+
+        if not username or not new_password:
+            return render_template('recover_password.html', error="Please provide both username and a new password.")
+
+        student = Student.query.get(username)
+        if not student:
+            return render_template('recover_password.html', error="No account found with the provided username.")
+
+        # Update the password_hash field in the database
+        student.password_hash = new_password
+        db.session.commit()
+
+        flash("Password has been successfully updated.", "success")
+        return redirect(url_for('home'))  # Redirect back to the login page
+
     return render_template('recover_password.html')
 
 @app.route('/admin')
@@ -68,7 +80,8 @@ def create_student():
         diploma=diploma,
         year_of_entry=year_of_entry,
         email=email,
-        points=student_points
+        points=student_points,
+        password_hash='student'  # Default password hash for new students
     )
     db.session.add(new_student)
     db.session.commit()
@@ -102,7 +115,8 @@ def upload_csv():
                             diploma=diploma,
                             year_of_entry=int(year_of_entry),
                             email=email,
-                            points=int(student_points)
+                            points=int(student_points),
+                            password_hash='student'  # Default password hash for new students
                         )
                         db.session.add(new_student)
                     else:
@@ -144,6 +158,12 @@ def update_student(student_id):
         student.year_of_entry = int(request.form['year_of_entry'])
         student.email = request.form['email']
         student.points = int(request.form['student_points'])
+
+        # Preserve the password_hash unless explicitly modified
+        new_password = request.form.get('new_password')  # Optional field for changing password
+        if new_password:
+            student.password_hash = new_password  # Update password_hash if provided
+
         db.session.commit()
     return redirect(url_for('admin_page'))
 

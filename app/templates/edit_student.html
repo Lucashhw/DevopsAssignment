@@ -30,12 +30,27 @@
     <h1>Edit Student</h1>
     <div class="form-container">
         <form action="/admin/update_student/{{ student.id }}" method="post">
-            <input type="text" name="student_name" value="{{ student.name }}" required>
-            <input type="text" name="diploma" value="{{ student.diploma }}" required>
-            <input type="number" name="year_of_entry" value="{{ student.year_of_entry }}" required>
-            <input type="email" name="email" value="{{ student.email }}" required>
-            <input type="number" name="student_points" value="{{ student.points }}" required>
-            <button type="submit">Update Student</button>
+            <input type="hidden" name="student_id" value="{{ student.id }}">
+            <label for="student_name">Name:</label>
+            <input type="text" id="student_name" name="student_name" value="{{ student.name }}" required>
+        
+            <label for="diploma">Diploma:</label>
+            <input type="text" id="diploma" name="diploma" value="{{ student.diploma }}" required>
+        
+            <label for="year_of_entry">Year of Entry:</label>
+            <input type="number" id="year_of_entry" name="year_of_entry" value="{{ student.year_of_entry }}" required>
+        
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ student.email }}" required>
+        
+            <label for="student_points">Points:</label>
+            <input type="number" id="student_points" name="student_points" value="{{ student.points }}" required>
+        
+            <!-- Optional: Allow changing password -->
+            <label for="new_password">New Password (Optional):</label>
+            <input type="password" id="new_password" name="new_password" placeholder="Leave blank to keep current password">
+        
+            <button type="submit">Save Changes</button>
         </form>
     </div>
 </body>

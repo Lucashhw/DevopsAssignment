@@ -5,12 +5,13 @@ db = SQLAlchemy()
 
 class Student(db.Model):
     __tablename__ = 'students'
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(db.String, primary_key=True)  # Student ID
     name = db.Column(db.String, nullable=False)
     diploma = db.Column(db.String, nullable=False)
     year_of_entry = db.Column(db.Integer, nullable=False)
-    email = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, nullable=False, unique=True)  # Email must be unique
     points = db.Column(db.Integer, default=0)
+    password_hash = db.Column(db.String, nullable=True)  # Field to store passwords
 
 class RedeemableItem(db.Model):
     __tablename__ = 'redeemable_items'
