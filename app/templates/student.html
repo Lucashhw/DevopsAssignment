@@ -42,23 +42,40 @@
         .navigation-links a:hover {
             background-color: #218838;
         }
+        /* Logout Button Styling */
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .logout-button:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
-    <h1>Welcome to the Student Page</h1>
+    <!-- Logout Button -->
+    <div style="text-align: right; margin-bottom: 20px;">
+        <a href="/logout" class="logout-button">Logout</a>
+    </div>
 
+    <h1>Welcome to the Student Page</h1>
     <!-- Student Information Section -->
     <div class="student-info">
         <h2>Your Information</h2>
         <p><strong>Username:</strong> {{ student.id }}</p>
         <p><strong>Total Points:</strong> {{ student.points }}</p>
     </div>
-
     <!-- Navigation Links -->
     <div class="navigation-links">
         <a href="/student/{{ student.id }}/redeemable_items">Redeemable Items</a>
         <a href="/student/{{ student.id }}/redeemed_items">Redeemed Items</a>
     </div>
-
 </body>
 </html>

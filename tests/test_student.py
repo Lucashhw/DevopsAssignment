@@ -2,6 +2,7 @@ import unittest
 from app import app, db
 from app.models import Student, RedeemableItem, RedeemedItem
 
+
 class TestStudentPageProcess(unittest.TestCase):
     def setUp(self):
         """
@@ -14,7 +15,6 @@ class TestStudentPageProcess(unittest.TestCase):
         with app.app_context():
             db.drop_all()  # Drop all tables to ensure a clean slate
             db.create_all()  # Recreate all tables
-
             # Add a sample student
             student = Student(
                 id='A1234567X',
@@ -26,7 +26,6 @@ class TestStudentPageProcess(unittest.TestCase):
                 password_hash='student'  # Default password hash for testing
             )
             db.session.add(student)
-
             # Add some redeemable items
             items_data = [
                 {'name': 'AAA', 'points_required': 100, 'quantity': 5},
@@ -35,7 +34,6 @@ class TestStudentPageProcess(unittest.TestCase):
             for data in items_data:
                 item = RedeemableItem(**data)
                 db.session.add(item)
-
             db.session.commit()
 
     def tearDown(self):
@@ -57,6 +55,26 @@ class TestStudentPageProcess(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Welcome to the Student Page', response.data)
 
+    def test_logout_functionality(self):
+        """
+        Test that the logout functionality works as expected.
+        """
+        # Log in as a student
+        self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
+
+        # Log out the user
+        response = self.app.get('/logout', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Login', response.data)  # Ensure the user is redirected to the login page
+
+        # Attempt to access a protected page after logout
+        response = self.app.get('/student/A1234567X', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Invalid username or password', response.data)  # Check for flashed error message
+
     def test_student_page_options(self):
         """
         Test that the student page displays options for redeemable items and redeemed items.
@@ -66,7 +84,6 @@ class TestStudentPageProcess(unittest.TestCase):
             username='A1234567X',
             password='student'
         ), follow_redirects=True)
-
         # Access the student page
         response = self.app.get('/student/A1234567X', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -82,7 +99,6 @@ class TestStudentPageProcess(unittest.TestCase):
             username='A1234567X',
             password='student'
         ), follow_redirects=True)
-
         # Access the student page
         response = self.app.get('/student/A1234567X', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -98,7 +114,6 @@ class TestStudentPageProcess(unittest.TestCase):
             username='A1234567X',
             password='student'
         ), follow_redirects=True)
-
         # Access the redeemable items page
         response = self.app.get('/student/A1234567X/redeemable_items', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -114,7 +129,6 @@ class TestStudentPageProcess(unittest.TestCase):
             username='A1234567X',
             password='student'
         ), follow_redirects=True)
-
         # Add a redeemed item for the student
         with app.app_context():
             redeemed_item = RedeemedItem(
@@ -124,7 +138,6 @@ class TestStudentPageProcess(unittest.TestCase):
             )
             db.session.add(redeemed_item)
             db.session.commit()
-
         # Access the redeemed items page
         response = self.app.get('/student/A1234567X/redeemed_items', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -140,17 +153,16 @@ class TestStudentPageProcess(unittest.TestCase):
             username='A1234567X',
             password='student'
         ), follow_redirects=True)
-
         # Modify the student's points to exceed the maximum limit
         with app.app_context():
             student = db.session.get(Student, 'A1234567X')  # Use the new SQLAlchemy 2.0 method
             student.points = 10000  # Exceeds the maximum limit
             db.session.commit()
-
         # Access the student page
         response = self.app.get('/student/A1234567X', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(b'Total Points: 10000', response.data)  # Ensure points are capped at 9999
+
 
 if __name__ == '__main__':
     unittest.main()
