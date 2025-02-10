@@ -83,11 +83,11 @@
         <h1>Login</h1>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="{{ category }}-message">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="{{ category }}-message">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
         {% endwith %}
 
         <form action="/login" method="post">

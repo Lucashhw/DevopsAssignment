@@ -150,5 +150,23 @@ class TestAdminProcess(unittest.TestCase):
             self.assertIsNotNone(item)
             self.assertEqual(item.points_required, 100)
 
+    # New Test: Logout Functionality
+    def test_logout(self):
+        """Test logging out from the admin page."""
+        # First, log in as admin
+        self.login_as_admin()
+
+        # Now, attempt to log out
+        response = self.client.get('/logout', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        # After logging out, check if we are redirected to the login page
+        self.assertIn(b'Login', response.data)
+
+        # Try accessing a protected route (e.g., /admin) without being logged in
+        response = self.client.get('/admin', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Login', response.data)  # Should be redirected to login page
+
 if __name__ == '__main__':
     unittest.main()
