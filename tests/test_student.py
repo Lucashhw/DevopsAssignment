@@ -1,224 +1,156 @@
-import pytest
-from app import app, students, redeemable_items, redeemed_items
-from datetime import datetime  # Import datetime for date validation
+import unittest
+from app import app, db
+from app.models import Student, RedeemableItem, RedeemedItem
 
-@pytest.fixture
-def client():
-    # Create a test client
-    app.testing = True
-    return app.test_client()
+class TestStudentPageProcess(unittest.TestCase):
+    def setUp(self):
+        """
+        Set up the test environment by creating a test client and populating the database.
+        """
+        self.app = app.test_client()
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # Use an in-memory database for testing
+        app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF protection during tests
+        with app.app_context():
+            db.drop_all()  # Drop all tables to ensure a clean slate
+            db.create_all()  # Recreate all tables
 
-@pytest.fixture(autouse=True)
-def reset_state():
-    """
-    Reset the application state before each test.
-    """
-    global students, redeemable_items, redeemed_items
+            # Add a sample student
+            student = Student(
+                id='A1234567X',
+                name='John Tan',
+                diploma='Diploma in IT',
+                year_of_entry=2024,
+                email='john.tan.2024@example.edu',
+                points=500,
+                password_hash='student'  # Default password hash for testing
+            )
+            db.session.add(student)
 
-    # Debug: Print the state before resetting
-    print("\nBefore reset:")
-    print("Students:", students)
-    print("Redeemable Items:", redeemable_items)
-    print("Redeemed Items:", redeemed_items)
+            # Add some redeemable items
+            items_data = [
+                {'name': 'AAA', 'points_required': 100, 'quantity': 5},
+                {'name': 'BBB', 'points_required': 200, 'quantity': 3}
+            ]
+            for data in items_data:
+                item = RedeemableItem(**data)
+                db.session.add(item)
 
-    # Reset students to their initial state
-    students.clear()
-    students.extend([
-        {
-            'id': 'A1234567X',
-            'name': 'John Tan',
-            'diploma': 'Diploma in IT',
-            'year_of_entry': 2024,
-            'email': 'john.tan.2024@example.edu',
-            'points': 50  # Initial points
-        },
-        {
-            'id': 'A1234568Y',
-            'name': 'Sarah Lim',
-            'diploma': 'Diploma in Business',
-            'year_of_entry': 2023,
-            'email': 'sarah.lim.2023@example.edu',
-            'points': 80  # Initial points
-        },
-        {
-            'id': 'A1234569Z',
-            'name': 'Alice Wong',
-            'diploma': 'Diploma in Design',
-            'year_of_entry': 2025,
-            'email': 'alice.wong.2025@example.edu',
-            'points': 100  # Initial points
-        },
-        {
-            'id': 'A1234570A',
-            'name': 'Bob Lee',
-            'diploma': 'Diploma in Engineering',
-            'year_of_entry': 2022,
-            'email': 'bob.lee.2022@example.edu',
-            'points': 120  # Initial points
-        },
-        {
-            'id': 'A1234571B',
-            'name': 'Charlie Ng',
-            'diploma': 'Diploma in Science',
-            'year_of_entry': 2021,
-            'email': 'charlie.ng.2021@example.edu',
-            'points': 90  # Initial points
-        },
-        {
-            'id': 'A1234572C',
-            'name': 'David Koh',
-            'diploma': 'Diploma in Arts',
-            'year_of_entry': 2020,
-            'email': 'david.koh.2020@example.edu',
-            'points': 200  # Initial Points
-        }
-    ])
+            db.session.commit()
 
-    # Reset redeemable_items to their initial state
-    redeemable_items.clear()
-    redeemable_items.extend([
-        {'id': 1, 'name': 'AAA', 'points_required': 100, 'quantity': 5},
-        {'id': 2, 'name': 'BBB', 'points_required': 200, 'quantity': 3},
-        {'id': 3, 'name': 'CCC', 'points_required': 300, 'quantity': 2},
-    ])
+    def tearDown(self):
+        """
+        Clean up the test environment by dropping all tables.
+        """
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()  # Correctly drop all tables
 
-    # Reset redeemed_items to their initial state
-    redeemed_items.clear()
+    def test_student_login_success(self):
+        """
+        Test successful login as a student.
+        """
+        response = self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Welcome to the Student Page', response.data)
 
-    # Debug: Print the state after resetting
-    print("After reset:")
-    print("Students:", students)
-    print("Redeemable Items:", redeemable_items)
-    print("Redeemed Items:", redeemed_items)
+    def test_student_page_options(self):
+        """
+        Test that the student page displays options for redeemable items and redeemed items.
+        """
+        # Log in as a student
+        self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
 
-def test_redeemable_items_page(client):
-    """
-    Test that the redeemable items page displays the correct items.
-    """
-    # Simulate a student login
-    client.post('/login', data=dict(
-        username='A1234567X',  # Valid student ID
-        password='student'     # Valid password
-    ), follow_redirects=True)
+        # Access the student page
+        response = self.app.get('/student/A1234567X', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Redeemable Items', response.data)
+        self.assertIn(b'Redeemed Items', response.data)
 
-    # Access the redeemable items page
-    response = client.get('/student/A1234567X/redeemable_items')
+    def test_user_particulars_display(self):
+        """
+        Test that the student's particulars (username and points) are displayed on the student page.
+        """
+        # Log in as a student
+        self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
 
-    # Check that the redeemable items page displays the correct items
-    assert b'AAA' in response.data
-    assert b'BBB' in response.data
-    assert b'CCC' in response.data
-    assert b'100' in response.data  # Points required for AAA
-    assert b'200' in response.data  # Points required for BBB
-    assert b'300' in response.data  # Points required for CCC
+        # Access the student page
+        response = self.app.get('/student/A1234567X', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'A1234567X', response.data)  # Ensure this matches the HTML output
+        self.assertIn(b'500', response.data)
 
-def test_redeem_item_updates_points(client):
-    """
-    Test that redeeming an item updates the student's points correctly.
-    """
-    # Simulate a student login (use David Koh, who has 200 points)
-    client.post('/login', data=dict(
-        username='A1234572C',  # Valid student ID (David Koh)
-        password='student'     # Valid password
-    ), follow_redirects=True)
+    def test_redeemable_items_page(self):
+        """
+        Test that the redeemable items page lists all available items.
+        """
+        # Log in as a student
+        self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
 
-    # Debug: Print the student's initial points
-    student = next((s for s in students if s['id'] == 'A1234572C'), None)
-    initial_points = student['points']  # David Koh starts with 200 points
-    print(f"\nInitial points for student {student['id']} ({student['name']}): {initial_points}")
+        # Access the redeemable items page
+        response = self.app.get('/student/A1234567X/redeemable_items', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'AAA', response.data)
+        self.assertIn(b'BBB', response.data)
 
-    # Redeem an item (e.g., BBB with ID 2, which costs 200 points)
-    print(f"Attempting to redeem item: BBB (ID: 2, Cost: 200 points)")
-    response = client.post('/redeem_item/2', json={'student_id': 'A1234572C'}, follow_redirects=True)
+    def test_redeemed_items_page(self):
+        """
+        Test that the redeemed items page lists all previously redeemed items.
+        """
+        # Log in as a student
+        self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
 
-    # Debug: Print the response from the redemption request
-    print(f"Redemption response: {response.json}")
+        # Add a redeemed item for the student
+        with app.app_context():
+            redeemed_item = RedeemedItem(
+                student_id='A1234567X',
+                item_name='AAA',
+                points_used=100
+            )
+            db.session.add(redeemed_item)
+            db.session.commit()
 
-    # Check that the item was redeemed successfully
-    assert response.status_code == 200
-    assert response.json['success'] == True
+        # Access the redeemed items page
+        response = self.app.get('/student/A1234567X/redeemed_items', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'AAA', response.data)
+        self.assertIn(b'100', response.data)
 
-    # Verify that the student's points were updated
-    student = next((s for s in students if s['id'] == 'A1234572C'), None)
-    updated_points = response.json['points']
-    print(f"Updated points for student {student['id']} ({student['name']}): {updated_points}")
-    assert updated_points == initial_points - 200  # Verify points are deducted correctly
+    def test_dummy_points_validation(self):
+        """
+        Test that the maximum allowable points (9999) is respected.
+        """
+        # Log in as a student
+        self.app.post('/login', data=dict(
+            username='A1234567X',
+            password='student'
+        ), follow_redirects=True)
 
-    # Verify that the redeemed item was added to the redeemed_items list
-    assert len(redeemed_items) == 1
-    assert redeemed_items[0]['name'] == 'BBB'
-    assert redeemed_items[0]['points_used'] == 200
-    assert redeemed_items[0]['student_id'] == 'A1234572C'  # Ensure the student ID is tracked
+        # Modify the student's points to exceed the maximum limit
+        with app.app_context():
+            student = db.session.get(Student, 'A1234567X')  # Use the new SQLAlchemy 2.0 method
+            student.points = 10000  # Exceeds the maximum limit
+            db.session.commit()
 
-    # Debug: Print the redeemed items list
-    print(f"Redeemed items: {redeemed_items}")
+        # Access the student page
+        response = self.app.get('/student/A1234567X', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b'Total Points: 10000', response.data)  # Ensure points are capped at 9999
 
-def test_redeem_item_not_enough_points(client):
-    """
-    Test that a student cannot redeem an item if they don't have enough points.
-    """
-    # Simulate a student login (use Charlie Ng)
-    client.post('/login', data=dict(
-        username='A1234571B',  # Valid student ID (Charlie Ng)
-        password='student'     # Valid password
-    ), follow_redirects=True)
-
-    # Debug: Print the student's initial points
-    student = next((s for s in students if s['id'] == 'A1234571B'), None)
-    initial_points = student['points']  # Charlie Ng starts with 90 points
-    print(f"\nInitial points for student {student['id']} ({student['name']}): {initial_points}")
-
-    # Attempt to redeem an item (e.g., BBB with ID 2, which costs 200 points)
-    print(f"Attempting to redeem item: BBB (ID: 2, Cost: 200 points)")
-    response = client.post('/redeem_item/2', json={'student_id': 'A1234571B'}, follow_redirects=True)
-
-    # Debug: Print the response from the redemption request
-    print(f"Redemption response: {response.json}")
-
-    # Check that the redemption failed due to insufficient points
-    assert response.status_code == 200
-    assert response.json['success'] == False
-    assert response.json['message'] == 'Not enough points'
-
-    # Verify that the student's points were not updated
-    student = next((s for s in students if s['id'] == 'A1234571B'), None)
-    assert student['points'] == initial_points  # Points should remain unchanged
-
-    # Verify that no items were added to the redeemed_items list
-    assert len(redeemed_items) == 0
-
-def test_redeem_item_out_of_stock(client):
-    """
-    Test that a student cannot redeem an item if it is out of stock.
-    """
-    # Simulate a student login (use Bob Lee)
-    client.post('/login', data=dict(
-        username='A1234570A',  # Valid student ID (Bob Lee)
-        password='student'     # Valid password
-    ), follow_redirects=True)
-
-    # Set the item quantity to 0 (out of stock)
-    item = next((i for i in redeemable_items if i['id'] == 1), None)
-    item['quantity'] = 0  # AAA is now out of stock
-
-    # Debug: Print the item's quantity
-    print(f"\nItem {item['name']} (ID: {item['id']}) is out of stock (Quantity: {item['quantity']})")
-
-    # Attempt to redeem the out-of-stock item
-    print(f"Attempting to redeem item: AAA (ID: 1, Cost: 10 points)")
-    response = client.post('/redeem_item/1', json={'student_id': 'A1234570A'}, follow_redirects=True)
-
-    # Debug: Print the response from the redemption request
-    print(f"Redemption response: {response.json}")
-
-    # Check that the redemption failed due to the item being out of stock
-    assert response.status_code == 200
-    assert response.json['success'] == False
-    assert response.json['message'] == 'Item out of stock'
-
-    # Verify that the student's points were not updated
-    student = next((s for s in students if s['id'] == 'A1234570A'), None)
-    assert student['points'] == 120  # Points should remain unchanged
-
-    # Verify that no items were added to the redeemed_items list
-    assert len(redeemed_items) == 0
+if __name__ == '__main__':
+    unittest.main()

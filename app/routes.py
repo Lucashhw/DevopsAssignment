@@ -13,15 +13,14 @@ def home():
 def login():
     username = request.form['username']
     password = request.form['password']
-
     if not username or not password:
         return render_template('login.html', error="Invalid username or password")
-
     if username == 'admin' and password == 'admin':
         session['user_id'] = 'admin'
         return redirect(url_for('admin_page'))
-
-    student = Student.query.get(username)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, username)
     if student and student.password_hash == password:
         print(f"Before login: Student points = {student.points}")  # Debug statement
         print(f"Before login: Student username = {student.id}")  # Debug statement
@@ -30,35 +29,38 @@ def login():
     else:
         return render_template('login.html', error="Invalid username or password")
 
-
-
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
     if request.method == 'POST':
         username = request.form.get('username')  # Get the username from the form
         new_password = request.form.get('new_password')  # Get the new password from the form
 
+        # Check for empty fields
         if not username or not new_password:
-            return render_template('recover_password.html', error="Please provide both username and a new password.")
+            flash("Please provide both username and a new password.", "error")
+            return render_template('recover_password.html')
 
-        student = Student.query.get(username)
+        # Check if the username exists in the database
+        student = db.session.get(Student, username)
         if not student:
-            return render_template('recover_password.html', error="No account found with the provided username.")
+            flash("No account found with the provided username.", "error")
+            return render_template('recover_password.html')
 
         # Update the password_hash field in the database
         student.password_hash = new_password
         db.session.commit()
 
+        # Notify the user of success and redirect to the login page
         flash("Password has been successfully updated.", "success")
         return redirect(url_for('home'))  # Redirect back to the login page
 
+    # For GET requests, render the recover password page
     return render_template('recover_password.html')
 
 @app.route('/admin')
 def admin_page():
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
     items = RedeemableItem.query.all()
     return render_template('admin.html', students=Student.query.all(), redeemable_items=items)
 
@@ -66,14 +68,12 @@ def admin_page():
 def create_student():
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
     student_id = request.form['student_id']
     student_name = request.form['student_name']
     diploma = request.form['diploma']
     year_of_entry = int(request.form['year_of_entry'])
     email = request.form['email']
     student_points = int(request.form['student_points'])
-
     new_student = Student(
         id=student_id,
         name=student_name,
@@ -91,7 +91,6 @@ def create_student():
 def upload_csv():
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
     if 'file' not in request.files:
         flash('No file uploaded', 'error')
         return redirect(url_for('admin_page'))
@@ -139,8 +138,9 @@ def upload_csv():
 def edit_student(student_id):
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    student = Student.query.get(student_id)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, student_id)
     if student:
         return render_template('edit_student.html', student=student)
     else:
@@ -150,20 +150,19 @@ def edit_student(student_id):
 def update_student(student_id):
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    student = Student.query.get(student_id)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, student_id)
     if student:
         student.name = request.form['student_name']
         student.diploma = request.form['diploma']
         student.year_of_entry = int(request.form['year_of_entry'])
         student.email = request.form['email']
         student.points = int(request.form['student_points'])
-
         # Preserve the password_hash unless explicitly modified
         new_password = request.form.get('new_password')  # Optional field for changing password
         if new_password:
             student.password_hash = new_password  # Update password_hash if provided
-
         db.session.commit()
     return redirect(url_for('admin_page'))
 
@@ -171,8 +170,9 @@ def update_student(student_id):
 def delete_student(student_id):
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    student = Student.query.get(student_id)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, student_id)
     if student:
         db.session.delete(student)
         db.session.commit()
@@ -182,7 +182,6 @@ def delete_student(student_id):
 def search_student():
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
     query = request.args.get('query')
     results = Student.query.filter((Student.id.ilike(f'%{query}%')) | (Student.name.ilike(f'%{query}%'))).all()
     items = RedeemableItem.query.all()
@@ -192,7 +191,6 @@ def search_student():
 def redeemable_items_admin_page():
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
     items = RedeemableItem.query.all()
     return render_template('admin_redeemable_items.html', redeemable_items=items)
 
@@ -200,11 +198,9 @@ def redeemable_items_admin_page():
 def create_redeemable_item():
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
     name = request.form['name']
     points_required = int(request.form['points_required'])
     quantity = int(request.form['quantity'])
-
     new_item = RedeemableItem(
         name=name,
         points_required=points_required,
@@ -218,8 +214,9 @@ def create_redeemable_item():
 def edit_redeemable_item(item_id):
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    item = RedeemableItem.query.get(item_id)
+    
+    # Updated line to use Session.get()
+    item = db.session.get(RedeemableItem, item_id)
     if item:
         return jsonify({
             'id': item.id,
@@ -234,8 +231,9 @@ def edit_redeemable_item(item_id):
 def update_redeemable_item(item_id):
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    item = RedeemableItem.query.get(item_id)
+    
+    # Updated line to use Session.get()
+    item = db.session.get(RedeemableItem, item_id)
     if item:
         item.name = request.form['name']
         item.points_required = int(request.form['points_required'])
@@ -250,8 +248,9 @@ def update_redeemable_item(item_id):
 def delete_redeemable_item(item_id):
     if session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    item = RedeemableItem.query.get(item_id)
+    
+    # Updated line to use Session.get()
+    item = db.session.get(RedeemableItem, item_id)
     if item:
         db.session.delete(item)
         db.session.commit()
@@ -261,8 +260,9 @@ def delete_redeemable_item(item_id):
 def student_page(student_id):
     if session.get('user_id') != student_id and session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    student = Student.query.get(student_id)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, student_id)
     if student:
         return render_template('student.html', student=student)
     else:
@@ -272,8 +272,9 @@ def student_page(student_id):
 def redeemable_items_page(student_id):
     if session.get('user_id') != student_id and session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    student = Student.query.get(student_id)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, student_id)
     if student:
         items = RedeemableItem.query.all()
         return render_template('redeemable_items.html', student=student, redeemable_items=items)
@@ -284,8 +285,9 @@ def redeemable_items_page(student_id):
 def redeemed_items_page(student_id):
     if session.get('user_id') != student_id and session.get('user_id') != 'admin':
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
-
-    student = Student.query.get(student_id)
+    
+    # Updated line to use Session.get()
+    student = db.session.get(Student, student_id)
     if student:
         redeemed_items = RedeemedItem.query.filter_by(student_id=student_id).all()
         return render_template('redeemed_items.html', student=student, redeemed_items=redeemed_items)
@@ -296,11 +298,13 @@ def redeemed_items_page(student_id):
 def redeem_item(item_id):
     if session.get('user_id') != request.json.get('student_id') and session.get('user_id') != 'admin':
         return jsonify({'success': False, 'message': 'Unauthorized access'})
-
     student_id = request.json.get('student_id')
-    item = RedeemableItem.query.get(item_id)
+    
+    # Updated line to use Session.get()
+    item = db.session.get(RedeemableItem, item_id)
     if item:
-        student = Student.query.get(student_id)
+        # Updated line to use Session.get()
+        student = db.session.get(Student, student_id)
         if student:
             print(f"Before redemption: Student points = {student.points}")
             if student.points >= item.points_required and item.quantity > 0:
