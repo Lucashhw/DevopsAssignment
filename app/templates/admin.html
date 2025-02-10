@@ -63,19 +63,22 @@
     </style>
 </head>
 <body>
+    <!-- Logout Button -->
+    <div style="text-align: right; margin-bottom: 20px;">
+        <a href="/logout" style="padding: 8px 12px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 4px;">Logout</a>
+    </div>
+
     <h1>Admin Page</h1>
-
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
     {% endwith %}
-
     <!-- Create Student Form -->
     <div class="form-container">
         <h2>Create Student</h2>
@@ -89,16 +92,14 @@
             <button type="submit">Create Student</button>
         </form>
     </div>
-
-     <!-- Upload CSV Form -->
-     <div class="form-container">
+    <!-- Upload CSV Form -->
+    <div class="form-container">
         <h2>Upload CSV File</h2>
         <form action="/admin/upload_csv" method="post" enctype="multipart/form-data">
             <input type="file" name="file" accept=".csv" required>
             <button type="submit">Upload CSV</button>
         </form>
     </div>
-
     <!-- List All Students -->
     <h2>Student List</h2>
     <table>
@@ -130,8 +131,6 @@
             {% endfor %}
         </tbody>
     </table>
-
-    
     <!-- Search Student Form -->
     <div class="form-container">
         <h2>Search Student</h2>
@@ -140,14 +139,12 @@
             <button type="submit">Search</button>
         </form>
     </div>
-
     <!-- Redeemable Items Section -->
     <div class="redeemable-items-section">
         <h2>Redeemable Items</h2>
         <p>Manage redeemable items for students.</p>
         <a href="/redeemable_items">Manage Redeemable Items</a>
     </div>
-
     <script>
         function confirmDelete(studentId) {
             if (confirm('Are you sure you want to delete this student?')) {
@@ -155,7 +152,5 @@
             }
         }
     </script>
-
-
 </body>
 </html>

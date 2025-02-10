@@ -28,6 +28,13 @@ def login():
         return redirect(url_for('student_page', student_id=student.id))
     else:
         return render_template('login.html', error="Invalid username or password")
+    
+@app.route('/logout')
+def logout():
+    # Clear the session data
+    session.clear()
+    # Redirect to the login page
+    return redirect(url_for('home'))
 
 @app.route('/recover_password', methods=['GET', 'POST'])
 def recover_password():
@@ -259,6 +266,7 @@ def delete_redeemable_item(item_id):
 @app.route('/student/<student_id>')
 def student_page(student_id):
     if session.get('user_id') != student_id and session.get('user_id') != 'admin':
+        flash('Invalid username or password', 'error')
         return redirect(url_for('home'))  # Redirect unauthorized users to the login page
     
     # Updated line to use Session.get()
