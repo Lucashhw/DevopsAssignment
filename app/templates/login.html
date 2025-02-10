@@ -53,6 +53,10 @@
             color: red;
             margin-top: 10px;
         }
+        .success-message {
+            color: green;
+            margin-top: 10px;
+        }
         .password-container {
             position: relative;
         }
@@ -77,6 +81,15 @@
 <body>
     <div class="login-container">
         <h1>Login</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="{{ category }}-message">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
         <form action="/login" method="post">
             <input type="text" id="username" name="username" placeholder="Username" required>
             <div class="password-container">
