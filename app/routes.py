@@ -96,7 +96,7 @@ def create_student():
 
     
     # Send a notification to Discord
-    webhook_url = "https://discord.com/api/webhooks/1338767867738325153/gtomympnewBoJd4I2lqdTMk62wgOgpBqq7MEW5KLPo4ivR2gY_uggg58ybzBi-weMkPX"  # Replace with your actual webhook URL
+    webhook_url = "https://discord.com/api/webhooks/1338767867738325153/gtomympnewBoJd4I2lqdTMk62wgOgpBqq7MEW5KLPo4ivR2gY_uggg58ybzBi-weMkPX"  
     payload = {
         "content": f"New student created:\n"
                    f"Name: {student_name}\n"
@@ -151,9 +151,26 @@ def upload_csv():
             # Check if there are any invalid rows
             if has_invalid_rows:
                 flash('Invalid CSV file. Please ensure all rows have the correct format.', 'error')
+
+
             else:
                 db.session.commit()
                 flash('CSV file uploaded successfully.', 'success')
+
+                 # Send a notification to Discord
+                webhook_url = "https://discord.com/api/webhooks/1338767867738325153/gtomympnewBoJd4I2lqdTMk62wgOgpBqq7MEW5KLPo4ivR2gY_uggg58ybzBi-weMkPX"
+                payload = {
+                    "content": "CSV file uploaded successfully.\n"
+                               "New students have been added to the database."
+                }
+                headers = {"Content-Type": "application/json"}
+                response = requests.post(webhook_url, json=payload, headers=headers)
+                
+                if response.status_code == 204:
+                    print("CSV upload notification sent successfully!")
+                else:
+                    print(f"Failed to send CSV upload notification. Status code: {response.status_code}")
+
         except Exception as e:
             flash(f'Error processing CSV file: {str(e)}', 'error')
     else:
@@ -200,6 +217,25 @@ def delete_student(student_id):
     # Updated line to use Session.get()
     student = db.session.get(Student, student_id)
     if student:
+
+        # Send a notification to Discord
+        webhook_url = "https://discord.com/api/webhooks/1338767867738325153/gtomympnewBoJd4I2lqdTMk62wgOgpBqq7MEW5KLPo4ivR2gY_uggg58ybzBi-weMkPX"
+        payload = {
+            "content": f"Student account deleted:\n"
+                       f"Student Name: {student.name}\n"
+                       f"Student ID: {student.id}\n"
+                       f"Email: {student.email}"
+        }
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(webhook_url, json=payload, headers=headers)
+        
+        if response.status_code == 204:
+            print("Deletion notification sent successfully!")
+        else:
+            print(f"Failed to send deletion notification. Status code: {response.status_code}")
+
+
+
         db.session.delete(student)
         db.session.commit()
     return redirect(url_for('admin_page'))
@@ -333,7 +369,7 @@ def redeem_item(item_id):
         # Updated line to use Session.get()
         student = db.session.get(Student, student_id)
         if student:
-            print(f"Before redemption: Student points = {student.points}")
+            
             if student.points >= item.points_required and item.quantity > 0:
                 student.points -= item.points_required
                 item.quantity -= 1
@@ -345,7 +381,25 @@ def redeem_item(item_id):
                 )
                 db.session.add(redeemed_item)
                 db.session.commit()
-                print(f"After redemption: Student points = {student.points}")
+
+                # Send a notification to Discord
+                webhook_url = "https://discord.com/api/webhooks/1338767867738325153/gtomympnewBoJd4I2lqdTMk62wgOgpBqq7MEW5KLPo4ivR2gY_uggg58ybzBi-weMkPX"
+                payload = {
+                    "content": f"Item redeemed:\n"
+                               f"Student Name: {student.name}\n"
+                               f"Student ID: {student.id}\n"
+                               f"Item Name: {item.name}\n"
+                               f"Points Used: {item.points_required}\n"
+                               f"Remaining Quantity: {item.quantity}"
+                }
+                headers = {"Content-Type": "application/json"}
+                response = requests.post(webhook_url, json=payload, headers=headers)
+                
+                if response.status_code == 204:  # Success status code for Discord webhooks
+                    print("Discord notification sent successfully!")
+                else:
+                    print(f"Failed to send Discord notification. Status code: {response.status_code}")
+                
                 return jsonify({'success': True, 'points': student.points})
             elif item.quantity <= 0:
                 return jsonify({'success': False, 'message': 'Item out of stock'})
