@@ -4,6 +4,7 @@ from app.models import Student, RedeemableItem, RedeemedItem
 import csv
 from io import TextIOWrapper
 from datetime import datetime
+import requests
 
 @app.route('/')
 def home():
@@ -92,6 +93,24 @@ def create_student():
     )
     db.session.add(new_student)
     db.session.commit()
+
+    
+    # Send a notification to Discord
+    webhook_url = "https://discord.com/api/webhooks/1338767867738325153/gtomympnewBoJd4I2lqdTMk62wgOgpBqq7MEW5KLPo4ivR2gY_uggg58ybzBi-weMkPX"  # Replace with your actual webhook URL
+    payload = {
+        "content": f"New student created:\n"
+                   f"Name: {student_name}\n"
+                   f"ID: {student_id}\n"
+                   f"Email: {email}"
+    }
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(webhook_url, json=payload, headers=headers)
+
+    if response.status_code == 204:  # Success status code for Discord webhooks
+        print("Discord notification sent successfully!")
+    else:
+        print(f"Failed to send Discord notification. Status code: {response.status_code}")
+
     return redirect(url_for('admin_page'))
 
 @app.route('/admin/upload_csv', methods=['POST'])
