@@ -208,6 +208,4 @@ This project was developed collaboratively by the following team members:
 - **[Hazel]:** Quality Assurance 
 ---
 
-dd
-dd
-dd
+
