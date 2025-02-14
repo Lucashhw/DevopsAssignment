@@ -114,7 +114,7 @@ LBPS/
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/<your-username>/LBPS.git
+   git clone [https://github.com/Muhammad-Raahil/DevopsAssignment.git]
    cd LBPS
    ```
 
